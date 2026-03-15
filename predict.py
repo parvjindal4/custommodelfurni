@@ -224,6 +224,24 @@ class Predictor(BasePredictor):
             default=""
         ),
 
+        # ── Output toggles ─────────────────────────────────────────────────
+        output_masks: bool = Input(
+            description="Generate individual segmentation masks.",
+            default=True
+        ),
+        output_segmentation: bool = Input(
+            description="Generate annotated image with colored overlays and labels.",
+            default=True
+        ),
+        output_bbox: bool = Input(
+            description="Include bounding box data in metadata.",
+            default=True
+        ),
+        output_eraser: bool = Input(
+            description="Enable object erasing (requires erase_labels or erase_bbox).",
+            default=False
+        ),
+
         # ── Erase ───────────────────────────────────────────────────────────
         erase_labels: str = Input(
             description=(
@@ -343,32 +361,45 @@ class Predictor(BasePredictor):
         for i, (mask, box, score, label) in enumerate(
             zip(all_masks, boxes_xyxy, scores, phrases)
         ):
-            x1, y1, x2, y2 = box.tolist()
-            metadata.append({
+            entry = {
                 "id":      i,
                 "label":   label,
                 "score":   round(float(score), 4),
-                "bbox": {
+                "area_px": int(mask.sum()),
+            }
+            if output_bbox:
+                x1, y1, x2, y2 = box.tolist()
+                entry["bbox"] = {
                     "x1": round(x1,1), "y1": round(y1,1),
                     "x2": round(x2,1), "y2": round(y2,1),
                     "width":  round(x2-x1,1),
                     "height": round(y2-y1,1),
-                },
-                "area_px": int(mask.sum()),
-            })
+                }
+            metadata.append(entry)
 
         # Save original
         orig_path = Path(tempfile.mktemp(suffix="_original.png"))
         pil_img.save(str(orig_path))
 
+        # Masks
+        mask_paths = []
+        if output_masks:
+            for i, (mask, label) in enumerate(zip(all_masks, phrases)):
+                mask_img = Image.fromarray((mask > 0).astype(np.uint8) * 255)
+                mp = Path(tempfile.mktemp(suffix=f"_mask_{i}_{label}.png"))
+                mask_img.save(str(mp))
+                mask_paths.append(mp)
+
         # Annotated
-        ann_path = self._draw_annotations(img_np, all_masks, boxes_xyxy, phrases, scores)
+        ann_path = None
+        if output_segmentation:
+            ann_path = self._draw_annotations(img_np, all_masks, boxes_xyxy, phrases, scores)
 
         # Erase
         erased_path = None
         erase_log   = []
 
-        if erase_labels.strip() or erase_bbox.strip():
+        if output_eraser and (erase_labels.strip() or erase_bbox.strip()):
             erase_mask = np.zeros((H, W), dtype=np.uint8)
 
             if erase_labels.strip():
@@ -431,9 +462,13 @@ class Predictor(BasePredictor):
 
         result = {
             "original_image":  CogPath(orig_path),
-            "annotated_image": CogPath(ann_path),
             "metadata_json":   CogPath(meta_path),
         }
+        if ann_path:
+            result["annotated_image"] = CogPath(ann_path)
+        if mask_paths:
+            for i, mp in enumerate(mask_paths):
+                result[f"mask_{i}"] = CogPath(mp)
         if erased_path:
             result["erased_image"] = CogPath(erased_path)
         return result
