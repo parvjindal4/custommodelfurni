@@ -33,4 +33,4 @@ jobs:
         env:
           REPLICATE_API_TOKEN: ${{ secrets.REPLICATE_API_TOKEN }}
         run: |
-          /tmp/cog push r8.im/furnilabs13-del/megmentmask-furnivision --require-push
+          /tmp/cog push r8.im/furnilabs13-del/megmentmask-furnivision
