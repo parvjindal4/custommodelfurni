@@ -12,17 +12,15 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Maximize disk space
-        run: |
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf /usr/local/lib/android
-          sudo rm -rf /opt/ghc
-          sudo rm -rf /opt/hostedtoolcache/CodeQL
-          sudo rm -rf /opt/hostedtoolcache/PyPy
-          sudo apt-get remove -y '^ghc-8.*' || true
-          sudo apt-get remove -y 'dotnet-.*' || true
-          sudo apt-get autoremove -y || true
-          sudo docker image prune -a -f
-          df -h
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: true
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+          swap-storage: true
 
       - name: Install Cog
         run: |
