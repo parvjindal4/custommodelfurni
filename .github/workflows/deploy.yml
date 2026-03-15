@@ -16,11 +16,12 @@ jobs:
 
       - name: Install Cog
         run: |
-          curl -s https://github.com/replicate/cog/releases/download/v0.13.3/cog_Linux_x86_64.tar.gz | tar -xz -C /usr/local/bin/
-          chmod +x /usr/local/bin/cog
+          curl -fsSL -o /tmp/cog https://github.com/replicate/cog/releases/download/v0.13.2/cog_Linux_x86_64
+          chmod +x /tmp/cog
+          /tmp/cog --version
 
       - name: Deploy to Replicate
         env:
           REPLICATE_API_TOKEN: ${{ secrets.REPLICATE_API_TOKEN }}
         run: |
-          /usr/local/bin/cog push r8.im/furnilabs13-del/megmentmask-furnivision
+          /tmp/cog push r8.im/furnilabs13-del/megmentmask-furnivision
