@@ -30,7 +30,7 @@ GDINO_WEIGHTS_URL  = (
 GDINO_WEIGHTS_PATH = "/weights/groundingdino_swinb.pth"
 SAM2_CHECKPOINT    = "/weights/sam2_hiera_large.pt"
 SAM2_CONFIG        = "sam2_hiera_l.yaml"
-LAMA_URL           = "https://huggingface.co/smartywu/big-lama/resolve/main/big-lama.pt"
+LAMA_URL           = "https://huggingface.co/JosephCatrambone/big-lama-torchscript/resolve/main/lama.pt"
 LAMA_PATH          = "/weights/big-lama.pt"
 DEVICE             = "cuda" if torch.cuda.is_available() else "cpu"
 
