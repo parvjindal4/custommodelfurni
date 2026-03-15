@@ -22,7 +22,7 @@ from sam2.build_sam import build_sam2
 from sam2.sam2_image_predictor import SAM2ImagePredictor
 
 # ---------------------------------------------------------------------------
-GDINO_CONFIG       = "GroundingDINO/groundingdino/config/GroundingDINO_SwinB_cfg.py"
+GDINO_CONFIG       = "/src/GroundingDINO/groundingdino/config/GroundingDINO_SwinB_cfg.py"
 GDINO_WEIGHTS_URL  = (
     "https://github.com/IDEA-Research/GroundingDINO/releases/download/"
     "v0.1.0-alpha2/groundingdino_swinb_cogcoor.pth"
