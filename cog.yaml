@@ -17,7 +17,6 @@ build:
     - pycocotools==2.0.7
 
   run:
-    - curl -fsSL https://packagecloud.io/AtomEditor/atom/gpgkey | apt-key add -
     - apt-get update && apt-get install -y git wget libgl1 libglib2.0-0
     - pip install git+https://github.com/facebookresearch/sam2.git
     - pip install git+https://github.com/IDEA-Research/GroundingDINO.git
