@@ -20,7 +20,8 @@ build:
     - apt-get update && apt-get install -y git wget libgl1 libglib2.0-0
     - pip install git+https://github.com/facebookresearch/sam2.git
     - git clone https://github.com/IDEA-Research/GroundingDINO.git /src/GroundingDINO
-    - cd /src/GroundingDINO && FORCE_CUDA=1 TORCH_CUDA_ARCH_LIST="7.0;7.5;8.0;8.6;8.9;9.0" pip install -e .
+    - pip install git+https://github.com/IDEA-Research/GroundingDINO.git
+    - git clone https://github.com/IDEA-Research/GroundingDINO.git /src/GroundingDINO
     - mkdir -p /weights
     - wget -q -O /weights/sam2_hiera_large.pt https://dl.fbaipublicfiles.com/segment_anything_2/072824/sam2_hiera_large.pt
     - wget -q -O /weights/groundingdino_swinb.pth https://github.com/IDEA-Research/GroundingDINO/releases/download/v0.1.0-alpha2/groundingdino_swinb_cogcoor.pth

@@ -14,6 +14,40 @@ from pathlib import Path
 from cog import BasePredictor, Input, Path as CogPath
 
 # ── Grounding DINO ──────────────────────────────────────────────────────────
+# Monkey-patch: force pure-PyTorch deformable attention (no CUDA _C extension)
+import groundingdino.models.GroundingDINO.ms_deform_attn as _ms
+_orig_forward = _ms.MSDeformAttn.forward
+def _patched_forward(self, query, reference_points, input_flatten, input_spatial_shapes,
+                     input_level_start_index, input_padding_mask=None):
+    from groundingdino.models.GroundingDINO.ms_deform_attn import multi_scale_deformable_attn_pytorch
+    N, Len_q, _ = query.shape
+    N, Len_in, _ = input_flatten.shape
+    value = self.value_proj(input_flatten)
+    if input_padding_mask is not None:
+        value = value.masked_fill(input_padding_mask[..., None], float(0))
+    value = value.view(N, Len_in, self.n_heads, self.d_model // self.n_heads)
+    sampling_offsets = self.sampling_offsets(query).view(
+        N, Len_q, self.n_heads, self.n_levels, self.n_points, 2)
+    attention_weights = self.attention_weights(query).view(
+        N, Len_q, self.n_heads, self.n_levels * self.n_points)
+    attention_weights = attention_weights.softmax(-1).view(
+        N, Len_q, self.n_heads, self.n_levels, self.n_points)
+    if reference_points.shape[-1] == 2:
+        offset_normalizer = torch.stack(
+            [input_spatial_shapes[..., 1], input_spatial_shapes[..., 0]], -1)
+        sampling_locations = (
+            reference_points[:, :, None, :, None, :]
+            + sampling_offsets / offset_normalizer[None, None, None, :, None, :])
+    elif reference_points.shape[-1] == 4:
+        sampling_locations = (
+            reference_points[:, :, None, :, None, :2]
+            + sampling_offsets / self.n_points
+            * reference_points[:, :, None, :, None, 2:] * 0.5)
+    output = multi_scale_deformable_attn_pytorch(
+        value, input_spatial_shapes, sampling_locations, attention_weights)
+    return self.output_proj(output)
+_ms.MSDeformAttn.forward = _patched_forward
+
 from groundingdino.util.inference import load_model as load_gdino, predict as gdino_predict
 from groundingdino.util import box_ops
 
